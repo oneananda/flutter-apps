@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter To-Do App',
+      title: 'Flutter To-Do App!',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -57,6 +57,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
+  final List<String> _todoItems = [];
+  final TextEditingController _textFieldController = TextEditingController();
+
   void _incrementCounter() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
@@ -66,6 +69,75 @@ class _MyHomePageState extends State<MyHomePage> {
       // called again, and so nothing would appear to happen.
       _counter++;
     });
+  }
+
+  void _editTodoItem(int index, String newTask) {
+    setState(() {
+      _todoItems[index] = newTask;
+    });
+    _textFieldController.clear();
+  }
+
+  void _removeTodoItem(int index) {
+    setState(() {
+      _todoItems.removeAt(index);
+    });
+  }
+
+  Widget _buildTodoList() {
+    return ListView.builder(
+      itemCount: _todoItems.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          title: Text(_todoItems[index]),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(Icons.edit),
+                onPressed: () => _displayEditDialog(context, index),
+              ),
+              IconButton(
+                icon: Icon(Icons.delete),
+                onPressed: () => _removeTodoItem(index),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _displayEditDialog(BuildContext context, int index) async {
+    _textFieldController.text = _todoItems[index];
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit todo item'),
+          content: TextField(
+            controller: _textFieldController,
+            decoration: const InputDecoration(hintText: 'Edit your todo'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _textFieldController.clear();
+              },
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _editTodoItem(index, _textFieldController.text);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -85,6 +157,29 @@ class _MyHomePageState extends State<MyHomePage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _textFieldController,
+              decoration: const InputDecoration(
+                hintText: 'Add a new todo item',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (value) {
+                setState(() {
+                  _todoItems.add(value);
+                  _textFieldController.clear();
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: _buildTodoList(),
+          ),
+        ],
       ),
       // This trailing comma makes auto-formatting nicer for build methods.
     );
